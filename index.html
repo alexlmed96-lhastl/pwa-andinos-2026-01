@@ -159,6 +159,26 @@
             document.getElementById(`btn-nav-${vista}`).classList.replace('text-slate-400', 'text-slate-800');
         }
 
+        // --- 6. LÓGICA DE INSTALACIÓN PWA ---
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const banner = document.getElementById('install-banner');
+            if(banner) banner.classList.remove('hidden');
+        });
+
+        async function instalarApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    document.getElementById('install-banner').classList.add('hidden');
+                }
+                deferredPrompt = null;
+            }
+        }
+
         window.onload = () => { renderAgenda(); renderForo(); renderTrivia(); };
     </script>
 </head>
@@ -187,6 +207,19 @@
             </div>
         </div>
     </header>
+    <!-- BANNER DE INSTALACIÓN PWA -->
+    <div id="install-banner" class="hidden bg-blue-50 border-b border-blue-100 p-3 flex justify-between items-center shadow-sm">
+        <div class="flex items-center gap-3">
+            <span class="text-2xl drop-shadow-sm">📱</span>
+            <p class="text-xs text-blue-900 font-bold leading-tight">
+                Instala la App de Campaña<br>
+                <span class="font-medium text-[10px] text-blue-600">Acceso directo y sin internet</span>
+            </p>
+        </div>
+        <button onclick="instalarApp()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-xl text-xs font-black shadow-md transition-transform active:scale-95">
+            INSTALAR
+        </button>
+    </div>
 
     <!-- PANTALLA 1: INICIO -->
     <!-- ========================================== -->
