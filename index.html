@@ -3,198 +3,331 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Andinos por el Cambio - App</title>
+    <title>Demo PWA - Campaña Universitaria</title>
     
-    <!-- ========================================== -->
-    <!-- ESTO ES LO QUE FALTABA: EL ALMA DE LA PWA -->
     <link rel="manifest" href="/manifest.webmanifest" />
-    <meta name="theme-color" content="#1d4ed8" />
+    <meta name="theme-color" content="#2563eb" />
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/192/5332/5332185.png">
-    <!-- ========================================== -->
 
-    <!-- 1. Carga de Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- 2. Tu Lógica de Programación -->
     <script>
+        // --- 1. ESTADO GLOBAL ---
         const appState = {
-            votos: JSON.parse(localStorage.getItem('votos_campana')) || { comedor: 124, seguridad: 89 },
-            comentarios: JSON.parse(localStorage.getItem('comentarios_campana')) || []
+            ideas: JSON.parse(localStorage.getItem('ideas_foro_v1')) || [
+                { id: 1, texto: "Ampliar el horario de la biblioteca hasta las 10 PM", votos: 45 },
+                { id: 2, texto: "Feria de empleabilidad con empresas locales", votos: 32 }
+            ],
+            trivia: { preguntaActual: 0, puntaje: 0, terminado: false }
         };
 
-        function votar(tipo) {
-            appState.votos[tipo]++;
-            actualizarStorage();
-            render();
-        }
+        const preguntasTrivia = [
+            { pregunta: "¿Cuál es el requisito principal para acceder al tercio superior?", opciones: ["Tener puros 20", "No reprobar cursos", "Estar en el último ciclo"], correcta: 1 },
+            { pregunta: "¿Dónde se tramita el carnet universitario?", opciones: ["Mesa de partes", "Dirección Académica", "Bienestar Estudiantil"], correcta: 2 }
+        ];
 
-        function enviarOpinion() {
-            const input = document.getElementById('opinion-input');
+        // --- 2. FORO ---
+        function enviarIdea() {
+            const input = document.getElementById('idea-input');
             if(input.value.trim() === "") return;
-            
-            appState.comentarios.unshift(input.value);
+            appState.ideas.push({ id: Date.now(), texto: input.value.trim(), votos: 1 });
             input.value = "";
-            actualizarStorage();
-            render();
+            localStorage.setItem('ideas_foro_v1', JSON.stringify(appState.ideas));
+            renderForo();
         }
 
-        function actualizarStorage() {
-            localStorage.setItem('votos_campana', JSON.stringify(appState.votos));
-            localStorage.setItem('comentarios_campana', JSON.stringify(appState.comentarios));
+        function votar(id) {
+            const idea = appState.ideas.find(i => i.id === id);
+            if (idea) { idea.votos++; localStorage.setItem('ideas_foro_v1', JSON.stringify(appState.ideas)); renderForo(); }
         }
 
-        function render() {
-            document.getElementById('votos-comedor').innerText = `▲ ${appState.votos.comedor}`;
-            document.getElementById('votos-seguridad').innerText = `▲ ${appState.votos.seguridad}`;
-            
-            const lista = document.getElementById('lista-comentarios');
-            lista.innerHTML = appState.comentarios.map(c => `
-                <div class="bg-white p-3 rounded-lg shadow-sm border-l-4 border-blue-400 text-sm mb-2 italic text-slate-600">
-                    "${c}"
+        function renderForo() {
+            const contenedor = document.getElementById('lista-ideas');
+            if(!contenedor) return;
+            contenedor.innerHTML = [...appState.ideas].sort((a, b) => b.votos - a.votos).map(idea => `
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex gap-4 items-center mb-3">
+                    <div class="flex flex-col items-center bg-slate-50 p-2 rounded-lg border border-slate-100 min-w-[3.5rem]">
+                        <button onclick="votar(${idea.id})" class="text-xl text-slate-400 hover:text-blue-600 transition-transform hover:-translate-y-1">▲</button>
+                        <span class="font-black text-slate-700 mt-1">${idea.votos}</span>
+                    </div>
+                    <div class="flex-1"><p class="text-sm font-medium text-slate-800 leading-snug">"${idea.texto}"</p></div>
                 </div>
             `).join('');
         }
 
-        let deferredPrompt;
+        // --- 3. AGENDA ---
+        function renderAgenda() {
+            const contenedor = document.getElementById('agenda-dinamica');
+            if(!contenedor) return;
+            const horaActual = new Date().getHours();
+            const fHora = (h) => `${h % 12 || 12}:00 ${h >= 12 ? 'PM' : 'AM'}`;
+            
+            contenedor.innerHTML = [
+                { hora: fHora(horaActual - 2), titulo: "Reunión de coordinación", lugar: "Cafetería Central", estado: "pasado" },
+                { hora: fHora(horaActual), titulo: "Conversatorio Abierto", lugar: "Auditorio Principal", estado: "curso" },
+                { hora: fHora(horaActual + 2), titulo: "Recorrido por pabellones", lugar: "Campus Norte", estado: "futuro" }
+            ].map(e => `
+                <div class="flex gap-4 items-start ${e.estado === 'pasado' ? 'opacity-50' : ''}">
+                    <div class="flex flex-col items-center mt-1 min-h-[4rem]">
+                        <div class="w-3 h-3 rounded-full ${e.estado === 'curso' ? 'bg-blue-600 animate-pulse ring-4 ring-blue-100' : (e.estado === 'pasado' ? 'bg-slate-300' : 'bg-white border-2 border-blue-400')} z-10"></div>
+                        <div class="w-0.5 h-full ${e.estado === 'pasado' ? 'bg-slate-200' : 'bg-blue-200'} my-1 flex-1"></div>
+                    </div>
+                    <div class="pb-4 w-full">
+                        <div class="text-blue-600 font-bold text-xs">🕒 ${e.hora} ${e.estado === 'curso' ? '<span class="ml-2 bg-blue-100 text-blue-700 text-[9px] px-2 py-0.5 rounded-full uppercase">En vivo</span>' : ''}</div>
+                        <p class="text-sm font-bold text-slate-800 mt-0.5">${e.titulo}</p>
+                        <p class="text-[11px] text-slate-500">📍 ${e.lugar}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
 
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('install-banner').classList.remove('hidden');
-        });
+        // --- 4. TRIVIA ---
+        function renderTrivia() {
+            const contenedor = document.getElementById('contenedor-trivia');
+            if(!contenedor) return;
+            if (appState.trivia.terminado) {
+                contenedor.innerHTML = `
+                    <div class="text-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200 animate-fade-in">
+                        <div class="text-6xl mb-4">🎓</div>
+                        <h3 class="text-xl font-black text-slate-800 mb-2">¡Completado!</h3>
+                        <p class="text-sm text-slate-600 mb-4">Acertaste <span class="font-bold text-blue-600">${appState.trivia.puntaje}</span> de ${preguntasTrivia.length}.</p>
+                        <button onclick="appState.trivia={preguntaActual:0,puntaje:0,terminado:false};renderTrivia()" class="text-xs text-blue-600 font-bold underline">Volver a jugar</button>
+                    </div>`;
+            } else {
+                const p = preguntasTrivia[appState.trivia.preguntaActual];
+                contenedor.innerHTML = `
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 animate-fade-in">
+                        <p class="text-xs text-slate-500 font-bold uppercase mb-2">Pregunta ${appState.trivia.preguntaActual + 1}</p>
+                        <h3 class="text-lg font-black text-slate-800 mb-6">${p.pregunta}</h3>
+                        <div class="space-y-3">
+                            ${p.opciones.map((op, i) => `<button onclick="responderTrivia(${i})" class="w-full text-left bg-slate-50 hover:bg-blue-50 border border-slate-200 p-4 rounded-xl text-sm font-medium transition-colors">${op}</button>`).join('')}
+                        </div>
+                    </div>`;
+            }
+        }
+        function responderTrivia(i) {
+            if (i === preguntasTrivia[appState.trivia.preguntaActual].correcta) appState.trivia.puntaje++;
+            if (++appState.trivia.preguntaActual >= preguntasTrivia.length) appState.trivia.terminado = true;
+            renderTrivia();
+        }
 
-        async function instalarApp() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    document.getElementById('install-banner').classList.add('hidden');
-                }
-                deferredPrompt = null;
+        // --- 5. NOTIFICACIONES (LA MAGIA) ---
+        async function activarNotificaciones() {
+            const btn = document.getElementById('btn-notificaciones');
+            
+            // Verificamos si el navegador soporta notificaciones
+            if (!("Notification" in window)) {
+                alert("Tu navegador no soporta notificaciones.");
+                return;
+            }
+
+            // Pedimos permiso al usuario
+            const permiso = await Notification.requestPermission();
+            
+            if (permiso === "granted") {
+                // Cambiamos el diseño del botón a "Activado"
+                btn.innerHTML = "¡Alertas Activadas! ✅";
+                btn.classList.replace('text-blue-800', 'text-green-700');
+                
+                // Programamos una notificación de prueba para 3 segundos después
+                setTimeout(() => {
+                    const opciones = {
+                        body: "El candidato Dr. Roberto Fernández está por iniciar su conversatorio en el Auditorio. ¡Acompáñanos!",
+                        icon: "https://cdn-icons-png.flaticon.com/192/3135/3135715.png",
+                        vibrate: [200, 100, 200]
+                    };
+
+                    // Usamos el Service Worker de la PWA para enviarla (más nativo)
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.ready.then(sw => {
+                            sw.showNotification("¡Evento en 10 minutos! 📍", opciones);
+                        }).catch(() => new Notification("¡Evento en 10 minutos! 📍", opciones));
+                    } else {
+                        new Notification("¡Evento en 10 minutos! 📍", opciones);
+                    }
+                }, 3000); // 3000 milisegundos = 3 segundos
+            } else {
+                alert("Necesitas dar permiso para recibir alertas.");
             }
         }
 
-        window.onload = render;
-        
-        // NOTA: Eliminamos el registro manual del Service Worker 
-        // Vite-plugin-pwa se encargará de inyectarlo correctamente en la versión final (dist).
+        // --- NAVEGACIÓN ---
+        function cambiarVista(vista) {
+            ['inicio', 'foro', 'juegos'].forEach(v => document.getElementById(`vista-${v}`).classList.add('hidden'));
+            document.getElementById(`vista-${vista}`).classList.remove('hidden');
+            ['inicio', 'foro', 'juegos'].forEach(v => document.getElementById(`btn-nav-${v}`).classList.replace('text-slate-800', 'text-slate-400'));
+            document.getElementById(`btn-nav-${vista}`).classList.replace('text-slate-400', 'text-slate-800');
+        }
+
+        window.onload = () => { renderAgenda(); renderForo(); renderTrivia(); };
     </script>
 </head>
-<body class="bg-slate-50 pb-24 font-sans">
+<body class="bg-slate-50 pb-24 font-sans selection:bg-blue-600 selection:text-white">
 
-    <!-- Header Institucional -->
-    <header class="bg-gradient-to-r from-blue-800 to-blue-600 text-white p-6 rounded-b-[2.5rem] shadow-xl">
+    <!-- Header Neutral -->
+    <!-- CABECERA PRINCIPAL (Logo y Nombre del Partido) -->
+    <header class="bg-gradient-to-br from-slate-800 to-slate-900 text-white p-6 rounded-b-[2rem] shadow-lg sticky top-0 z-50 border-b-2 border-blue-600">
         <div class="flex items-center gap-4">
-            <div class="w-20 h-20 bg-white rounded-full p-1 shadow-inner">
-                <img src="https://via.placeholder.com/150" class="rounded-full object-cover w-full h-full" alt="Candidato">
+            <!-- Logo del Partido (Escudo/Icono institucional) -->
+            <div class="w-16 h-16 bg-white rounded-xl p-2 shadow-inner shrink-0 flex items-center justify-center">
+                <img src="https://cdn-icons-png.flaticon.com/512/3112/3112946.png" class="object-contain w-full h-full" alt="Logo Alianza Universitaria">
             </div>
+            
+            <!-- Texto de la Cabecera -->
             <div>
-                <h1 class="text-xl font-black tracking-tight">ANDINOS POR EL CAMBIO</h1>
-                <p class="text-xs font-medium text-blue-100 uppercase tracking-widest">Rectorado 2026</p>
+                <span class="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-widest shadow-sm">
+                    Versión Demo
+                </span>
+                <h1 class="text-xl font-black tracking-tight mt-1.5 leading-none text-blue-50">
+                    ALIANZA<br>UNIVERSITARIA
+                </h1>
+                <p class="text-[10px] text-slate-400 mt-1 uppercase tracking-widest font-bold">
+                    Innovación y Futuro
+                </p>
             </div>
         </div>
     </header>
 
-    <div id="install-banner" class="hidden bg-yellow-100 p-4 border-b border-yellow-200 flex justify-between items-center">
-        <p class="text-xs text-yellow-800 font-medium">✨ Instala la App para recibir noticias en tiempo real</p>
-        <button onclick="instalarApp()" class="bg-yellow-500 text-white px-3 py-1 rounded-lg text-xs font-bold shadow-sm">
-            INSTALAR
-        </button>
-    </div>
+    <!-- PANTALLA 1: INICIO -->
+    <!-- ========================================== -->
+    <!-- PANTALLA 1: INICIO (Centro de Mando) -->
+    <!-- ========================================== -->
+    <main id="vista-inicio" class="p-5 space-y-6 animate-fade-in">
+        
+        <!-- Tarjeta de Notificaciones -->
+        <section class="bg-gradient-to-br from-blue-600 to-blue-800 p-5 rounded-2xl shadow-md text-white">
+            <div class="flex items-start gap-4">
+                <div class="text-3xl mt-1">🔔</div>
+                <div>
+                    <h3 class="font-black text-lg leading-tight">Alertas de Campaña</h3>
+                    <p class="text-xs text-blue-100 mt-1 mb-3 leading-snug">Activa las notificaciones para saber en qué pabellón se encuentra el candidato.</p>
+                    <button id="btn-notificaciones" onclick="activarNotificaciones()" class="w-full bg-white text-blue-800 px-4 py-2 rounded-xl font-bold text-xs shadow-sm hover:bg-blue-50 transition">
+                        Activar Alertas
+                    </button>
+                </div>
+            </div>
+        </section>
 
-    <main class="p-5 space-y-8">
-        <!-- Trayectoria Profesional -->
+        <!-- PERFIL DEL CANDIDATO Y GRADOS -->
         <section>
-            <h2 class="text-slate-800 font-bold mb-3 flex items-center gap-2">
-                <span class="bg-blue-100 p-1 rounded">🎓</span> Perfil del Candidato
+            <h2 class="text-slate-800 font-black text-xl mb-4 uppercase tracking-tight flex items-center gap-2">
+                <span class="text-2xl">🎓</span> Nuestro Candidato
             </h2>
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex gap-4 items-center mb-4">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="w-16 h-16 rounded-full border-2 border-blue-500 object-cover bg-slate-50 p-1" alt="Candidato">
+                    <div>
+                        <h3 class="font-black text-slate-800 text-lg leading-tight">Dr. Roberto Fernández</h3>
+                        <p class="text-[11px] text-blue-600 font-bold uppercase tracking-wider mt-1">Candidato a Rector</p>
+                    </div>
+                </div>
                 <p class="text-sm text-slate-600 leading-relaxed mb-4">
-                    Más de 20 años dedicados a la excelencia académica y la gestión universitaria transparente.
+                    Más de 20 años dedicados a la excelencia académica, la investigación científica y la gestión universitaria transparente.
                 </p>
-                <div class="flex gap-2 overflow-x-auto pb-2">
-                    <span class="bg-slate-100 text-[10px] px-3 py-1 rounded-full whitespace-nowrap">PHD EN INGENIERÍA</span>
-                    <span class="bg-slate-100 text-[10px] px-3 py-1 rounded-full whitespace-nowrap">EX-DECANO</span>
-                    <span class="bg-slate-100 text-[10px] px-3 py-1 rounded-full whitespace-nowrap">INVESTIGADOR CONCYTEC</span>
+                <div class="flex flex-wrap gap-2">
+                    <span class="bg-blue-50 text-blue-700 border border-blue-100 text-[10px] px-2 py-1 rounded font-bold">PHD EN INGENIERÍA</span>
+                    <span class="bg-slate-100 text-slate-700 border border-slate-200 text-[10px] px-2 py-1 rounded font-bold">EX-DECANO</span>
+                    <span class="bg-slate-100 text-slate-700 border border-slate-200 text-[10px] px-2 py-1 rounded font-bold">INVESTIGADOR</span>
                 </div>
             </div>
         </section>
 
-        <!-- Propuestas de Impacto -->
+        <!-- EL EQUIPO DE TRABAJO (Diseño en Cuadrícula) -->
         <section>
-            <h2 class="text-slate-800 font-bold mb-3 flex items-center gap-2">
-                <span class="bg-blue-100 p-1 rounded">🚀</span> Propuestas Clave
+            <h2 class="text-slate-800 font-black text-xl mb-4 uppercase tracking-tight flex items-center gap-2">
+                <span class="text-2xl">👥</span> Equipo de Gestión
             </h2>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-white p-4 rounded-2xl shadow-sm border-t-4 border-blue-500">
-                    <div class="text-2xl mb-2">🌐</div>
-                    <h3 class="font-bold text-xs uppercase text-slate-700">WiFi 6</h3>
-                    <p class="text-[10px] text-slate-500 mt-1">Cobertura total en el campus.</p>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 text-center">
+                    <img src="https://cdn-icons-png.flaticon.com/512/4140/4140047.png" class="w-12 h-12 bg-slate-50 rounded-full mx-auto mb-2 object-cover p-1 border border-slate-100">
+                    <h3 class="text-xs font-black text-slate-800">Dra. Elena Gómez</h3>
+                    <p class="text-[9px] text-slate-500 uppercase font-bold mt-1">Vicerrectora Acad.</p>
                 </div>
-                <div class="bg-white p-4 rounded-2xl shadow-sm border-t-4 border-green-500">
-                    <div class="text-2xl mb-2">🥗</div>
-                    <h3 class="font-bold text-xs uppercase text-slate-700">Comedor</h3>
-                    <p class="text-[10px] text-slate-500 mt-1">Mejora nutricional y cupos.</p>
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 text-center">
+                    <img src="https://cdn-icons-png.flaticon.com/512/4140/4140048.png" class="w-12 h-12 bg-slate-50 rounded-full mx-auto mb-2 object-cover p-1 border border-slate-100">
+                    <h3 class="text-xs font-black text-slate-800">Mg. Luis Vargas</h3>
+                    <p class="text-[9px] text-slate-500 uppercase font-bold mt-1">Vicerrector Inv.</p>
                 </div>
             </div>
         </section>
 
-        <!-- Buzón de Opiniones -->
-        <section class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
-            <h2 class="text-slate-800 font-bold mb-1">Buzón de Ideas</h2>
-            <p class="text-xs text-slate-500 mb-4">Tu opinión construye el plan de trabajo.</p>
-            
-            <div class="flex gap-2 mb-6">
-                <input id="opinion-input" type="text" placeholder="Escribe tu sugerencia..." 
-                    class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <button onclick="enviarOpinion()" class="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md">
-                    Enviar
-                </button>
-            </div>
-
-            <div id="lista-comentarios" class="max-h-40 overflow-y-auto">
-                <!-- Los comentarios aparecerán aquí -->
-            </div>
-        </section>
-
-        <!-- Agenda -->
-        <section class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
-            <h2 class="text-slate-800 font-bold mb-3 flex items-center gap-2">
-                <span class="bg-red-100 p-1 rounded">📍</span> Agenda de Hoy
+        <!-- PROPUESTAS PRINCIPALES -->
+        <section>
+            <h2 class="text-slate-800 font-black text-xl mb-4 uppercase tracking-tight flex items-center gap-2">
+                <span class="text-2xl">🎯</span> Propuestas Clave
             </h2>
             <div class="space-y-3">
-                <div class="flex gap-4 items-start">
-                    <div class="text-blue-600 font-bold text-sm bg-blue-50 px-2 py-1 rounded">10:00 AM</div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500 border border-slate-200 flex gap-4 items-start">
+                    <div class="bg-blue-50 p-2 rounded-lg text-xl">📚</div>
                     <div>
-                        <p class="text-sm font-bold">Conversatorio con Ingeniería</p>
-                        <p class="text-xs text-slate-500">Auditorio Principal - Pabellón B</p>
+                        <h3 class="font-bold text-sm text-slate-800 uppercase">Excelencia Académica</h3>
+                        <p class="text-[11px] text-slate-500 mt-1 leading-snug">Actualización de mallas curriculares y convenios internacionales.</p>
                     </div>
                 </div>
-                <div class="flex gap-4 items-start">
-                    <div class="text-blue-600 font-bold text-sm bg-blue-50 px-2 py-1 rounded">03:00 PM</div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-500 border border-slate-200 flex gap-4 items-start">
+                    <div class="bg-green-50 p-2 rounded-lg text-xl">💻</div>
                     <div>
-                        <p class="text-sm font-bold">Visita al Comedor Universitario</p>
-                        <p class="text-xs text-slate-500">Escuchar propuestas de bienestar</p>
+                        <h3 class="font-bold text-sm text-slate-800 uppercase">Modernización Digital</h3>
+                        <p class="text-[11px] text-slate-500 mt-1 leading-snug">Implementación de trámites 100% online y mejora del Wi-Fi en todos los pabellones.</p>
                     </div>
                 </div>
             </div>
         </section>
+
+        <!-- RADAR DE CAMPAÑA (Mantenemos el div para que JS no falle) -->
+        <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+            <div class="flex justify-between items-center mb-5">
+                <h2 class="text-slate-800 font-black flex items-center gap-2"><span class="text-xl">📡</span> Radar</h2>
+                <span class="flex items-center gap-1 text-[10px] text-green-600 font-bold bg-green-50 px-2 py-1 rounded-full">
+                    <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>En vivo
+                </span>
+            </div>
+            <!-- Aquí Javascript inyecta la agenda automáticamente -->
+            <div id="agenda-dinamica" class="ml-2"></div>
+        </section>
+
+    </main>
+    <!-- ========================================== -->
+
+    <!-- PANTALLA 2: FORO -->
+    <main id="vista-foro" class="hidden p-5 space-y-6 animate-fade-in">
+        <div class="text-center mb-6">
+            <h2 class="text-2xl font-black text-slate-800">Foro Estudiantil</h2>
+            <p class="text-xs text-slate-500 mt-1">Vota por las mejores propuestas.</p>
+        </div>
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-blue-100 mb-6">
+            <textarea id="idea-input" rows="2" placeholder="Escribe una idea..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none mb-3"></textarea>
+            <button onclick="enviarIdea()" class="w-full bg-blue-600 text-white py-2.5 rounded-xl font-bold text-sm shadow-md hover:bg-blue-700 transition">Publicar</button>
+        </div>
+        <div id="lista-ideas"></div>
     </main>
 
-    <!-- Navegación Inferior -->
-    <nav class="fixed bottom-0 w-full bg-white/80 backdrop-blur-md border-t border-slate-200 flex justify-around p-4 shadow-2xl">
-        <button class="flex flex-col items-center gap-1 text-blue-600">
-            <span class="text-xl">🏠</span>
-            <span class="text-[10px] font-bold">Inicio</span>
+    <!-- PANTALLA 3: JUEGOS -->
+    <main id="vista-juegos" class="hidden p-5 space-y-6 animate-fade-in">
+        <div class="text-center mb-6">
+            <h2 class="text-2xl font-black text-slate-800">Zona Interactiva</h2>
+            <p class="text-xs text-slate-500 mt-1">Demuestra qué tanto conoces de tu universidad.</p>
+        </div>
+        <div id="contenedor-trivia"></div>
+    </main>
+
+    <!-- NAVEGACIÓN INFERIOR -->
+    <nav class="fixed bottom-0 w-full bg-white/90 backdrop-blur-md border-t border-slate-200 flex justify-around p-3 pb-safe z-50">
+        <button id="btn-nav-inicio" onclick="cambiarVista('inicio')" class="flex flex-col items-center gap-1 text-slate-800 w-16">
+            <span class="text-2xl">🏠</span><span class="text-[10px] font-bold">Inicio</span>
         </button>
-        <button class="flex flex-col items-center gap-1 text-slate-400">
-            <span class="text-xl">📑</span>
-            <span class="text-[10px] font-bold">Plan</span>
+        <button id="btn-nav-foro" onclick="cambiarVista('foro')" class="flex flex-col items-center gap-1 text-slate-400 w-16">
+            <span class="text-2xl">💡</span><span class="text-[10px] font-bold">Ideas</span>
         </button>
-        <button class="flex flex-col items-center gap-1 text-slate-400">
-            <span class="text-xl">👥</span>
-            <span class="text-[10px] font-bold">Equipo</span>
+        <button id="btn-nav-juegos" onclick="cambiarVista('juegos')" class="flex flex-col items-center gap-1 text-slate-400 w-16">
+            <span class="text-2xl">🎮</span><span class="text-[10px] font-bold">Juegos</span>
         </button>
     </nav>
+    
+    <style>
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1rem); }
+        .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
 </body>
 </html>
