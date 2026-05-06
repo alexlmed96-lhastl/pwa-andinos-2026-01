@@ -69,6 +69,14 @@ async function instalarApp() {
 }
 
         window.onload = render;
+        
+        if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then(reg => console.log('Service Worker registrado', reg))
+            .catch(err => console.log('Error al registrar SW', err));
+    });
+}
     </script>
 </head>
 <body class="bg-slate-50 pb-24 font-sans">

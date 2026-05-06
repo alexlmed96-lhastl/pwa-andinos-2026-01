@@ -2,33 +2,30 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
-  server: {
-    host: true 
-  },
+  server: { host: true },
   plugins: [
     VitePWA({
       registerType: 'autoUpdate',
-      // Esto ayuda a que los archivos se guarden en caché correctamente
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      injectRegister: 'auto', // Esto asegura que se registre el Service Worker
       manifest: {
         name: 'Andinos por el Cambio',
         short_name: 'Andinos2026',
-        description: 'App oficial de la campaña universitaria 2026',
-        theme_color: '#2563eb',
+        description: 'App oficial de campaña',
+        theme_color: '#1d4ed8',
         background_color: '#ffffff',
-        display: 'standalone', // <--- ESTO elimina la barra del navegador
-        start_url: '/',        // <--- Indica dónde empieza la app al abrir el icono
+        display: 'standalone',
+        start_url: '/',
         icons: [
           {
-            src: 'https://via.placeholder.com/192', // Icono estándar
-            sizes: '192x192',
-            type: 'image/png'
-          },
-          {
-            src: 'https://via.placeholder.com/512', // Icono de alta resolución
+            src: 'https://cdn-icons-png.flaticon.com/512/5332/5332185.png', // Icono temporal real
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable' 
+            purpose: 'any maskable'
+          },
+          {
+            src: 'https://cdn-icons-png.flaticon.com/192/5332/5332185.png',
+            sizes: '192x192',
+            type: 'image/png'
           }
         ]
       }
