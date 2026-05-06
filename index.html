@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Andinos por el Cambio - App</title>
+    <!-- 1. Carga de Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. Tu Lógica de Programación -->
+    <script>
+        const appState = {
+            votos: JSON.parse(localStorage.getItem('votos_campana')) || { comedor: 124, seguridad: 89 },
+            comentarios: JSON.parse(localStorage.getItem('comentarios_campana')) || []
+        };
+
+        function votar(tipo) {
+            appState.votos[tipo]++;
+            actualizarStorage();
+            render();
+        }
+
+        function enviarOpinion() {
+            const input = document.getElementById('opinion-input');
+            if(input.value.trim() === "") return;
+            
+            appState.comentarios.unshift(input.value); // Añade al inicio
+            input.value = "";
+            actualizarStorage();
+            render();
+        }
+
+        function actualizarStorage() {
+            localStorage.setItem('votos_campana', JSON.stringify(appState.votos));
+            localStorage.setItem('comentarios_campana', JSON.stringify(appState.comentarios));
+        }
+
+        function render() {
+            // Actualizar Votos
+            document.getElementById('votos-comedor').innerText = `▲ ${appState.votos.comedor}`;
+            document.getElementById('votos-seguridad').innerText = `▲ ${appState.votos.seguridad}`;
+            
+            // Actualizar Comentarios
+            const lista = document.getElementById('lista-comentarios');
+            lista.innerHTML = appState.comentarios.map(c => `
+                <div class="bg-white p-3 rounded-lg shadow-sm border-l-4 border-blue-400 text-sm mb-2 italic text-slate-600">
+                    "${c}"
+                </div>
+            `).join('');
+        }
+        let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    // Mostrar el banner de instalación
+    document.getElementById('install-banner').classList.remove('hidden');
+});
+
+async function instalarApp() {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            document.getElementById('install-banner').classList.add('hidden');
+        }
+        deferredPrompt = null;
+    }
+}
+
+        window.onload = render;
+    </script>
+</head>
+<body class="bg-slate-50 pb-24 font-sans">
+
+    <!-- Header Institucional -->
+    <header class="bg-gradient-to-r from-blue-800 to-blue-600 text-white p-6 rounded-b-[2.5rem] shadow-xl">
+        <div class="flex items-center gap-4">
+            <div class="w-20 h-20 bg-white rounded-full p-1 shadow-inner">
+                <img src="https://via.placeholder.com/150" class="rounded-full object-cover w-full h-full" alt="Candidato">
+            </div>
+            <div>
+                <h1 class="text-xl font-black tracking-tight">ANDINOS POR EL CAMBIO</h1>
+                <p class="text-xs font-medium text-blue-100 uppercase tracking-widest">Rectorado 2026</p>
+            </div>
+        </div>
+    </header>
+        <div id="install-banner" class="hidden bg-yellow-100 p-4 border-b border-yellow-200 flex justify-between items-center">
+        <p class="text-xs text-yellow-800 font-medium">✨ Instala la App para recibir noticias en tiempo real</p>
+        <button onclick="instalarApp()" class="bg-yellow-500 text-white px-3 py-1 rounded-lg text-xs font-bold shadow-sm">
+            INSTALAR
+        </button>
+    </div>
+
+    <main class="p-5 space-y-8">
+        
+        <!-- Trayectoria Profesional (Compacta para Docentes) -->
+        <section>
+            <h2 class="text-slate-800 font-bold mb-3 flex items-center gap-2">
+                <span class="bg-blue-100 p-1 rounded">🎓</span> Perfil del Candidato
+            </h2>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                <p class="text-sm text-slate-600 leading-relaxed mb-4">
+                    Más de 20 años dedicados a la excelencia académica y la gestión universitaria transparente.
+                </p>
+                <div class="flex gap-2 overflow-x-auto pb-2">
+                    <span class="bg-slate-100 text-[10px] px-3 py-1 rounded-full whitespace-nowrap">PHD EN INGENIERÍA</span>
+                    <span class="bg-slate-100 text-[10px] px-3 py-1 rounded-full whitespace-nowrap">EX-DECANO</span>
+                    <span class="bg-slate-100 text-[10px] px-3 py-1 rounded-full whitespace-nowrap">INVESTIGADOR CONCYTEC</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Propuestas de Impacto (Breves para Alumnos) -->
+        <section>
+            <h2 class="text-slate-800 font-bold mb-3 flex items-center gap-2">
+                <span class="bg-blue-100 p-1 rounded">🚀</span> Propuestas Clave
+            </h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white p-4 rounded-2xl shadow-sm border-t-4 border-blue-500">
+                    <div class="text-2xl mb-2">🌐</div>
+                    <h3 class="font-bold text-xs uppercase text-slate-700">WiFi 6</h3>
+                    <p class="text-[10px] text-slate-500 mt-1">Cobertura total en el campus.</p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border-t-4 border-green-500">
+                    <div class="text-2xl mb-2">🥗</div>
+                    <h3 class="font-bold text-xs uppercase text-slate-700">Comedor</h3>
+                    <p class="text-[10px] text-slate-500 mt-1">Mejora nutricional y cupos.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Buzón de Opiniones (Interacción) -->
+        <section class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
+            <h2 class="text-slate-800 font-bold mb-1">Buzón de Ideas</h2>
+            <p class="text-xs text-slate-500 mb-4">Tu opinión construye el plan de trabajo.</p>
+            
+            <div class="flex gap-2 mb-6">
+                <input id="opinion-input" type="text" placeholder="Escribe tu sugerencia..." 
+                    class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button onclick="enviarOpinion()" class="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md">
+                    Enviar
+                </button>
+            </div>
+
+            <div id="lista-comentarios" class="max-h-40 overflow-y-auto">
+                <!-- Los comentarios aparecerán aquí -->
+            </div>
+        </section>
+        <section class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
+    <h2 class="text-slate-800 font-bold mb-3 flex items-center gap-2">
+        <span class="bg-red-100 p-1 rounded">📍</span> Agenda de Hoy
+    </h2>
+    <div class="space-y-3">
+        <div class="flex gap-4 items-start">
+            <div class="text-blue-600 font-bold text-sm bg-blue-50 px-2 py-1 rounded">10:00 AM</div>
+            <div>
+                <p class="text-sm font-bold">Conversatorio con Ingeniería</p>
+                <p class="text-xs text-slate-500">Auditorio Principal - Pabellón B</p>
+            </div>
+        </div>
+        <div class="flex gap-4 items-start">
+            <div class="text-blue-600 font-bold text-sm bg-blue-50 px-2 py-1 rounded">03:00 PM</div>
+            <div>
+                <p class="text-sm font-bold">Visita al Comedor Universitario</p>
+                <p class="text-xs text-slate-500">Escuchar propuestas de bienestar</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+    </main>
+
+    <!-- Navegación Inferior Móvil -->
+    <nav class="fixed bottom-0 w-full bg-white/80 backdrop-blur-md border-t border-slate-200 flex justify-around p-4 shadow-2xl">
+        <button class="flex flex-col items-center gap-1 text-blue-600">
+            <span class="text-xl">🏠</span>
+            <span class="text-[10px] font-bold">Inicio</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 text-slate-400">
+            <span class="text-xl">📑</span>
+            <span class="text-[10px] font-bold">Plan</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 text-slate-400">
+            <span class="text-xl">👥</span>
+            <span class="text-[10px] font-bold">Equipo</span>
+        </button>
+    </nav>
+
+</body>
+</html>
