@@ -4,6 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Andinos por el Cambio - App</title>
+    
+    <!-- ========================================== -->
+    <!-- ESTO ES LO QUE FALTABA: EL ALMA DE LA PWA -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#1d4ed8" />
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/192/5332/5332185.png">
+    <!-- ========================================== -->
+
     <!-- 1. Carga de Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -24,7 +32,7 @@
             const input = document.getElementById('opinion-input');
             if(input.value.trim() === "") return;
             
-            appState.comentarios.unshift(input.value); // Añade al inicio
+            appState.comentarios.unshift(input.value);
             input.value = "";
             actualizarStorage();
             render();
@@ -36,11 +44,9 @@
         }
 
         function render() {
-            // Actualizar Votos
             document.getElementById('votos-comedor').innerText = `▲ ${appState.votos.comedor}`;
             document.getElementById('votos-seguridad').innerText = `▲ ${appState.votos.seguridad}`;
             
-            // Actualizar Comentarios
             const lista = document.getElementById('lista-comentarios');
             lista.innerHTML = appState.comentarios.map(c => `
                 <div class="bg-white p-3 rounded-lg shadow-sm border-l-4 border-blue-400 text-sm mb-2 italic text-slate-600">
@@ -48,35 +54,30 @@
                 </div>
             `).join('');
         }
+
         let deferredPrompt;
 
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    // Mostrar el banner de instalación
-    document.getElementById('install-banner').classList.remove('hidden');
-});
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('install-banner').classList.remove('hidden');
+        });
 
-async function instalarApp() {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-            document.getElementById('install-banner').classList.add('hidden');
+        async function instalarApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    document.getElementById('install-banner').classList.add('hidden');
+                }
+                deferredPrompt = null;
+            }
         }
-        deferredPrompt = null;
-    }
-}
 
         window.onload = render;
         
-        if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js', { scope: '/' })
-            .then(reg => console.log('Service Worker registrado', reg))
-            .catch(err => console.log('Error al registrar SW', err));
-    });
-}
+        // NOTA: Eliminamos el registro manual del Service Worker 
+        // Vite-plugin-pwa se encargará de inyectarlo correctamente en la versión final (dist).
     </script>
 </head>
 <body class="bg-slate-50 pb-24 font-sans">
@@ -93,7 +94,8 @@ async function instalarApp() {
             </div>
         </div>
     </header>
-        <div id="install-banner" class="hidden bg-yellow-100 p-4 border-b border-yellow-200 flex justify-between items-center">
+
+    <div id="install-banner" class="hidden bg-yellow-100 p-4 border-b border-yellow-200 flex justify-between items-center">
         <p class="text-xs text-yellow-800 font-medium">✨ Instala la App para recibir noticias en tiempo real</p>
         <button onclick="instalarApp()" class="bg-yellow-500 text-white px-3 py-1 rounded-lg text-xs font-bold shadow-sm">
             INSTALAR
@@ -101,8 +103,7 @@ async function instalarApp() {
     </div>
 
     <main class="p-5 space-y-8">
-        
-        <!-- Trayectoria Profesional (Compacta para Docentes) -->
+        <!-- Trayectoria Profesional -->
         <section>
             <h2 class="text-slate-800 font-bold mb-3 flex items-center gap-2">
                 <span class="bg-blue-100 p-1 rounded">🎓</span> Perfil del Candidato
@@ -119,7 +120,7 @@ async function instalarApp() {
             </div>
         </section>
 
-        <!-- Propuestas de Impacto (Breves para Alumnos) -->
+        <!-- Propuestas de Impacto -->
         <section>
             <h2 class="text-slate-800 font-bold mb-3 flex items-center gap-2">
                 <span class="bg-blue-100 p-1 rounded">🚀</span> Propuestas Clave
@@ -138,7 +139,7 @@ async function instalarApp() {
             </div>
         </section>
 
-        <!-- Buzón de Opiniones (Interacción) -->
+        <!-- Buzón de Opiniones -->
         <section class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
             <h2 class="text-slate-800 font-bold mb-1">Buzón de Ideas</h2>
             <p class="text-xs text-slate-500 mb-4">Tu opinión construye el plan de trabajo.</p>
@@ -155,31 +156,32 @@ async function instalarApp() {
                 <!-- Los comentarios aparecerán aquí -->
             </div>
         </section>
-        <section class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
-    <h2 class="text-slate-800 font-bold mb-3 flex items-center gap-2">
-        <span class="bg-red-100 p-1 rounded">📍</span> Agenda de Hoy
-    </h2>
-    <div class="space-y-3">
-        <div class="flex gap-4 items-start">
-            <div class="text-blue-600 font-bold text-sm bg-blue-50 px-2 py-1 rounded">10:00 AM</div>
-            <div>
-                <p class="text-sm font-bold">Conversatorio con Ingeniería</p>
-                <p class="text-xs text-slate-500">Auditorio Principal - Pabellón B</p>
-            </div>
-        </div>
-        <div class="flex gap-4 items-start">
-            <div class="text-blue-600 font-bold text-sm bg-blue-50 px-2 py-1 rounded">03:00 PM</div>
-            <div>
-                <p class="text-sm font-bold">Visita al Comedor Universitario</p>
-                <p class="text-xs text-slate-500">Escuchar propuestas de bienestar</p>
-            </div>
-        </div>
-    </div>
-</section>
 
+        <!-- Agenda -->
+        <section class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
+            <h2 class="text-slate-800 font-bold mb-3 flex items-center gap-2">
+                <span class="bg-red-100 p-1 rounded">📍</span> Agenda de Hoy
+            </h2>
+            <div class="space-y-3">
+                <div class="flex gap-4 items-start">
+                    <div class="text-blue-600 font-bold text-sm bg-blue-50 px-2 py-1 rounded">10:00 AM</div>
+                    <div>
+                        <p class="text-sm font-bold">Conversatorio con Ingeniería</p>
+                        <p class="text-xs text-slate-500">Auditorio Principal - Pabellón B</p>
+                    </div>
+                </div>
+                <div class="flex gap-4 items-start">
+                    <div class="text-blue-600 font-bold text-sm bg-blue-50 px-2 py-1 rounded">03:00 PM</div>
+                    <div>
+                        <p class="text-sm font-bold">Visita al Comedor Universitario</p>
+                        <p class="text-xs text-slate-500">Escuchar propuestas de bienestar</p>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
-    <!-- Navegación Inferior Móvil -->
+    <!-- Navegación Inferior -->
     <nav class="fixed bottom-0 w-full bg-white/80 backdrop-blur-md border-t border-slate-200 flex justify-around p-4 shadow-2xl">
         <button class="flex flex-col items-center gap-1 text-blue-600">
             <span class="text-xl">🏠</span>
@@ -194,6 +196,5 @@ async function instalarApp() {
             <span class="text-[10px] font-bold">Equipo</span>
         </button>
     </nav>
-
 </body>
 </html>
