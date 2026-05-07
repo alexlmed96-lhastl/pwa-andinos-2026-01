@@ -6,26 +6,26 @@ export default defineConfig({
   plugins: [
     VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: 'auto', // Esto asegura que se registre el Service Worker
+      injectRegister: 'auto',
       manifest: {
-        name: 'Andinos por el Cambio',
-        short_name: 'Andinos2026',
+        name: 'Alianza Universitaria',
+        short_name: 'Universidad2026',
         description: 'App oficial de campaña',
-        theme_color: '#1d4ed8',
-        background_color: '#ffffff',
-        display: 'standalone',
+        theme_color: '#1e293b', // Actualizado al color oscuro que usamos
+        background_color: '#f8fafc',
+        display: 'standalone', // Esto fuerza la pantalla completa
         start_url: '/',
         icons: [
           {
-            src: 'https://cdn-icons-png.flaticon.com/512/5332/5332185.png', // Icono temporal real
+            src: '/logo.png', // ¡Apunta a tu archivo local en public!
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: '/logo.png', // Usamos el mismo para el de 512
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
-          },
-          {
-            src: 'https://cdn-icons-png.flaticon.com/192/5332/5332185.png',
-            sizes: '192x192',
-            type: 'image/png'
           }
         ]
       }
