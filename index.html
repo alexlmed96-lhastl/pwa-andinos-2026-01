@@ -180,6 +180,14 @@
         }
 
         window.onload = () => { renderAgenda(); renderForo(); renderTrivia(); };
+        // --- 7. FORZAR REGISTRO DEL SERVICE WORKER ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                    .then(reg => console.log('Service Worker registrado correctamente', reg))
+                    .catch(err => console.warn('Error al registrar SW:', err));
+            });
+        }
     </script>
 </head>
 <body class="bg-slate-50 pb-24 font-sans selection:bg-blue-600 selection:text-white">
