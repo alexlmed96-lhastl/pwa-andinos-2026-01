@@ -7,7 +7,7 @@
     
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="theme-color" content="#2563eb" />
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/192/5332/5332185.png">
+    <link rel="apple-touch-icon" href="/logo.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -180,14 +180,7 @@
         }
 
         window.onload = () => { renderAgenda(); renderForo(); renderTrivia(); };
-        // --- 7. FORZAR REGISTRO DEL SERVICE WORKER ---
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js', { scope: '/' })
-                    .then(reg => console.log('Service Worker registrado correctamente', reg))
-                    .catch(err => console.warn('Error al registrar SW:', err));
-            });
-        }
+        
     </script>
 </head>
 <body class="bg-slate-50 pb-24 font-sans selection:bg-blue-600 selection:text-white">
